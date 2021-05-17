@@ -143,25 +143,35 @@ class cachestore_redis extends cache_store implements cache_is_key_aware, cache_
 
     /**
      * Constructs an instance of this type of store.
+     * Config cachestore_redis_* override given configuration
      *
      * @param string $name
      * @param array $configuration
      */
     public function __construct($name, array $configuration = array()) {
+        global $CFG;
+
         $this->name = $name;
 
         if (!array_key_exists('server', $configuration) || empty($configuration['server'])) {
             return;
         }
         if (array_key_exists('serializer', $configuration)) {
-            $this->serializer = (int)$configuration['serializer'];
+            $this->serializer = (int)($CFG->cachestore_redis_serializer ?? $configuration['serializer']);
         }
         if (array_key_exists('compressor', $configuration)) {
-            $this->compressor = (int)$configuration['compressor'];
+            $this->compressor = (int)($CFG->cachestore_redis_compressor ?? $configuration['compressor']);
         }
+
         $password = !empty($configuration['password']) ? $configuration['password'] : '';
         $prefix = !empty($configuration['prefix']) ? $configuration['prefix'] : '';
-        $this->redis = $this->new_redis($configuration['server'], $prefix, $password);
+
+        $this->redis = $this->new_redis(
+            $CFG->cachestore_redis_server ?? $configuration['server'],
+            $CFG->cachestore_redis_prefix ?? $prefix,
+            $CFG->cachestore_redis_auth ??  $password,
+            $CFG->cachestore_redis_database ?? null
+        );
     }
 
     /**
@@ -173,7 +183,7 @@ class cachestore_redis extends cache_store implements cache_is_key_aware, cache_
      * @param string $password The server connection password
      * @return Redis
      */
-    protected function new_redis($server, $prefix = '', $password = '') {
+    protected function new_redis($server, $prefix = '', $password = '', $database = null) {
         $redis = new Redis();
         // Check if it isn't a Unix socket to set default port.
         $port = ($server[0] === '/') ? null : 6379;
@@ -188,6 +198,10 @@ class cachestore_redis extends cache_store implements cache_is_key_aware, cache_
                 if (!empty($password)) {
                     $redis->auth($password);
                 }
+
+                if ($database != null)
+                    $redis->select($database);
+
                 // If using compressor, serialisation will be done at cachestore level, not php-redis.
                 if ($this->compressor == self::COMPRESSOR_NONE) {
                     $redis->setOption(Redis::OPT_SERIALIZER, $this->serializer);

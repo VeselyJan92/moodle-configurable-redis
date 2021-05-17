@@ -39,30 +39,50 @@ class cachestore_redis_addinstance_form extends cachestore_addinstance_form {
     protected function configuration_definition() {
         $form = $this->_form;
 
-        $form->addElement('text', 'server', get_string('server', 'cachestore_redis'), array('size' => 24));
-        $form->setType('server', PARAM_TEXT);
-        $form->addHelpButton('server', 'server', 'cachestore_redis');
-        $form->addRule('server', get_string('required'), 'required');
+        global $CFG;
 
-        $form->addElement('passwordunmask', 'password', get_string('password', 'cachestore_redis'));
-        $form->setType('password', PARAM_RAW);
-        $form->addHelpButton('password', 'password', 'cachestore_redis');
+        if (!isset($CFG->cachestore_redis_server)){
+            $form->addElement('text', 'server', get_string('server', 'cachestore_redis'), array('size' => 24));
+            $form->setType('server', PARAM_TEXT);
+            $form->addHelpButton('server', 'server', 'cachestore_redis');
+            $form->addRule('server', get_string('required'), 'required');
+        }
 
-        $form->addElement('text', 'prefix', get_string('prefix', 'cachestore_redis'), array('size' => 16));
-        $form->setType('prefix', PARAM_TEXT); // We set to text but we have a rule to limit to alphanumext.
-        $form->addHelpButton('prefix', 'prefix', 'cachestore_redis');
-        $form->addRule('prefix', get_string('prefixinvalid', 'cachestore_redis'), 'regex', '#^[a-zA-Z0-9\-_]+$#');
+        if (!isset($CFG->cachestore_redis_auth)){
+            $form->addElement('passwordunmask', 'password', get_string('password', 'cachestore_redis'));
+            $form->setType('password', PARAM_RAW);
+            $form->addHelpButton('password', 'password', 'cachestore_redis');
+        }
 
-        $serializeroptions = cachestore_redis::config_get_serializer_options();
-        $form->addElement('select', 'serializer', get_string('useserializer', 'cachestore_redis'), $serializeroptions);
-        $form->addHelpButton('serializer', 'useserializer', 'cachestore_redis');
-        $form->setDefault('serializer', Redis::SERIALIZER_PHP);
-        $form->setType('serializer', PARAM_INT);
+        if (!isset($CFG->cachestore_redis_database)){
+            $form->addElement('text', 'database', get_string('database', 'cachestore_redis'), array('size' => 16));
+            $form->setType('database', PARAM_TEXT); // We set to text but we have a rule to limit to alphanumext.
+            $form->addHelpButton('database', 'database', 'cachestore_redis');
+            $form->addRule('database', get_string('databaseinvalid', 'cachestore_redis'), 'regex', '#^[0-9]+$#');
+        }
 
-        $compressoroptions = cachestore_redis::config_get_compressor_options();
-        $form->addElement('select', 'compressor', get_string('usecompressor', 'cachestore_redis'), $compressoroptions);
-        $form->addHelpButton('compressor', 'usecompressor', 'cachestore_redis');
-        $form->setDefault('compressor', cachestore_redis::COMPRESSOR_NONE);
-        $form->setType('compressor', PARAM_INT);
+        if (!isset($CFG->cachestore_redis_prefix)){
+            $form->addElement('text', 'prefix', get_string('prefix', 'cachestore_redis'), array('size' => 16));
+            $form->setType('prefix', PARAM_TEXT); // We set to text but we have a rule to limit to alphanumext.
+            $form->addHelpButton('prefix', 'prefix', 'cachestore_redis');
+            $form->addRule('prefix', get_string('prefixinvalid', 'cachestore_redis'), 'regex', '#^[a-zA-Z0-9\-_]+$#');
+        }
+
+        if (!isset($CFG->cachestore_redis_serializer)){
+            $serializeroptions = cachestore_redis::config_get_serializer_options();
+            $form->addElement('select', 'serializer', get_string('useserializer', 'cachestore_redis'), $serializeroptions);
+            $form->addHelpButton('serializer', 'useserializer', 'cachestore_redis');
+            $form->setDefault('serializer', Redis::SERIALIZER_PHP);
+            $form->setType('serializer', PARAM_INT);
+        }
+
+        if (!isset($CFG->cachestore_redis_compressor)){
+            $compressoroptions = cachestore_redis::config_get_compressor_options();
+            $form->addElement('select', 'compressor', get_string('usecompressor', 'cachestore_redis'), $compressoroptions);
+            $form->addHelpButton('compressor', 'usecompressor', 'cachestore_redis');
+            $form->setDefault('compressor', cachestore_redis::COMPRESSOR_NONE);
+            $form->setType('compressor', PARAM_INT);
+        }
+
     }
 }
